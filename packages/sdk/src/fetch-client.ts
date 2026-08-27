@@ -1356,6 +1356,20 @@ export type ColorParameters = {
     brightness: number;
     /** Contrast adjustment from -100 to 100 */
     contrast: number;
+    /** Saturation adjustment from -100 to 100 */
+    saturation?: number;
+    /** Exposure adjustment from -100 to 100 */
+    exposure?: number;
+    /** Temperature adjustment from -100 to 100 */
+    temperature?: number;
+    /** Tint adjustment from -100 to 100 */
+    tint?: number;
+    /** Sharpness adjustment from 0 to 100 */
+    sharpness?: number;
+    /** Black point adjustment from -100 to 100 */
+    blackPoint?: number;
+    /** White point adjustment from -100 to 100 */
+    whitePoint?: number;
 };
 export type AssetEditActionItemResponseDto = {
     action: AssetEditAction;

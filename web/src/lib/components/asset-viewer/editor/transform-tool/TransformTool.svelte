@@ -1,6 +1,6 @@
 <script lang="ts">
   import { shortcuts } from '$lib/actions/shortcut';
-  import { transformManager } from '$lib/managers/edit/transform-manager.svelte';
+  import { type ColorAdjustment, transformManager } from '$lib/managers/edit/transform-manager.svelte';
   import { Button, HStack, IconButton } from '@immich/ui';
   import { mdiFlipHorizontal, mdiFlipVertical, mdiRotateLeft, mdiRotateRight } from '@mdi/js';
   import { t } from 'svelte-i18n';
@@ -12,6 +12,17 @@
     height?: number;
     isFree?: boolean;
   }
+
+  type ColorAdjustmentLabel =
+    | 'editor_brightness'
+    | 'editor_contrast'
+    | 'editor_saturation'
+    | 'editor_exposure'
+    | 'editor_temperature'
+    | 'editor_tint'
+    | 'editor_black_point'
+    | 'editor_white_point'
+    | 'editor_sharpness';
 
   const aspectRatios: AspectRatioOption[] = [
     { label: $t('crop_aspect_ratio_free'), value: 'free', isFree: true },
@@ -25,6 +36,18 @@
     { label: '16:9', value: '16:9', width: 24, height: 14 },
     { label: '9:16', value: '9:16', width: 14, height: 24 },
     { label: $t('crop_aspect_ratio_square'), value: '1:1', width: 20, height: 20 },
+  ];
+
+  const colorAdjustments: { id: ColorAdjustment; label: ColorAdjustmentLabel; min: number; max: number }[] = [
+    { id: 'brightness', label: 'editor_brightness', min: -100, max: 100 },
+    { id: 'contrast', label: 'editor_contrast', min: -100, max: 100 },
+    { id: 'saturation', label: 'editor_saturation', min: -100, max: 100 },
+    { id: 'exposure', label: 'editor_exposure', min: -100, max: 100 },
+    { id: 'temperature', label: 'editor_temperature', min: -100, max: 100 },
+    { id: 'tint', label: 'editor_tint', min: -100, max: 100 },
+    { id: 'blackPoint', label: 'editor_black_point', min: -100, max: 100 },
+    { id: 'whitePoint', label: 'editor_white_point', min: -100, max: 100 },
+    { id: 'sharpness', label: 'editor_sharpness', min: 0, max: 100 },
   ];
 
   let isRotated = $derived(transformManager.normalizedRotation % 180 !== 0);
@@ -67,7 +90,7 @@
     transformManager.mirror(axis);
   }
 
-  function setColorAdjustment(type: 'brightness' | 'contrast', event: Event) {
+  function setColorAdjustment(type: ColorAdjustment, event: Event) {
     transformManager.setColorAdjustment(type, Number((event.currentTarget as HTMLInputElement).value));
   }
 </script>
@@ -153,28 +176,18 @@
   <div class="mt-6 flex h-10 w-full items-center justify-between text-sm">
     <h2>{$t('editor_adjustments')}</h2>
   </div>
-  <label class="mb-3 block text-sm text-white" for="brightness">
-    {$t('editor_brightness')}: {transformManager.brightness}
-    <input
-      class="mt-2 w-full"
-      id="brightness"
-      type="range"
-      min="-100"
-      max="100"
-      value={transformManager.brightness}
-      oninput={(event) => setColorAdjustment('brightness', event)}
-    />
-  </label>
-  <label class="mb-3 block text-sm text-white" for="contrast">
-    {$t('editor_contrast')}: {transformManager.contrast}
-    <input
-      class="mt-2 w-full"
-      id="contrast"
-      type="range"
-      min="-100"
-      max="100"
-      value={transformManager.contrast}
-      oninput={(event) => setColorAdjustment('contrast', event)}
-    />
-  </label>
+  {#each colorAdjustments as adjustment (adjustment.id)}
+    <label class="mb-3 block text-sm text-white" for={adjustment.id}>
+      {$t(adjustment.label)}: {transformManager[adjustment.id]}
+      <input
+        class="mt-2 w-full"
+        id={adjustment.id}
+        type="range"
+        min={adjustment.min}
+        max={adjustment.max}
+        value={transformManager[adjustment.id]}
+        oninput={(event) => setColorAdjustment(adjustment.id, event)}
+      />
+    </label>
+  {/each}
 </div>

@@ -20948,6 +20948,13 @@
       },
       "ColorParameters": {
         "properties": {
+          "blackPoint": {
+            "default": 0,
+            "description": "Black point adjustment from -100 to 100",
+            "maximum": 100,
+            "minimum": -100,
+            "type": "number"
+          },
           "brightness": {
             "description": "Brightness adjustment from -100 to 100",
             "maximum": 100,
@@ -20956,6 +20963,48 @@
           },
           "contrast": {
             "description": "Contrast adjustment from -100 to 100",
+            "maximum": 100,
+            "minimum": -100,
+            "type": "number"
+          },
+          "exposure": {
+            "default": 0,
+            "description": "Exposure adjustment from -100 to 100",
+            "maximum": 100,
+            "minimum": -100,
+            "type": "number"
+          },
+          "saturation": {
+            "default": 0,
+            "description": "Saturation adjustment from -100 to 100",
+            "maximum": 100,
+            "minimum": -100,
+            "type": "number"
+          },
+          "sharpness": {
+            "default": 0,
+            "description": "Sharpness adjustment from 0 to 100",
+            "maximum": 100,
+            "minimum": 0,
+            "type": "number"
+          },
+          "temperature": {
+            "default": 0,
+            "description": "Temperature adjustment from -100 to 100",
+            "maximum": 100,
+            "minimum": -100,
+            "type": "number"
+          },
+          "tint": {
+            "default": 0,
+            "description": "Tint adjustment from -100 to 100",
+            "maximum": 100,
+            "minimum": -100,
+            "type": "number"
+          },
+          "whitePoint": {
+            "default": 0,
+            "description": "White point adjustment from -100 to 100",
             "maximum": 100,
             "minimum": -100,
             "type": "number"

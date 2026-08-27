@@ -50,6 +50,13 @@ const ColorParametersSchema = z
   .object({
     brightness: z.number().min(-100).max(100).describe('Brightness adjustment from -100 to 100'),
     contrast: z.number().min(-100).max(100).describe('Contrast adjustment from -100 to 100'),
+    saturation: z.number().min(-100).max(100).default(0).describe('Saturation adjustment from -100 to 100'),
+    exposure: z.number().min(-100).max(100).default(0).describe('Exposure adjustment from -100 to 100'),
+    temperature: z.number().min(-100).max(100).default(0).describe('Temperature adjustment from -100 to 100'),
+    tint: z.number().min(-100).max(100).default(0).describe('Tint adjustment from -100 to 100'),
+    sharpness: z.number().min(0).max(100).default(0).describe('Sharpness adjustment from 0 to 100'),
+    blackPoint: z.number().min(-100).max(100).default(0).describe('Black point adjustment from -100 to 100'),
+    whitePoint: z.number().min(-100).max(100).default(0).describe('White point adjustment from -100 to 100'),
   })
   .meta({ id: 'ColorParameters' });
 

@@ -44,6 +44,17 @@ export enum ResizeBoundary {
   Bottom = 'bottom',
 }
 
+export type ColorAdjustment =
+  | 'brightness'
+  | 'contrast'
+  | 'saturation'
+  | 'exposure'
+  | 'temperature'
+  | 'tint'
+  | 'sharpness'
+  | 'blackPoint'
+  | 'whitePoint';
+
 class TransformManager implements EditToolManager {
   canReset: boolean = $derived.by(() => this.checkEdits());
   hasChanges: boolean = $state(false);
@@ -72,6 +83,13 @@ class TransformManager implements EditToolManager {
   mirrorVertical = $state(false);
   brightness = $state(0);
   contrast = $state(0);
+  saturation = $state(0);
+  exposure = $state(0);
+  temperature = $state(0);
+  tint = $state(0);
+  sharpness = $state(0);
+  blackPoint = $state(0);
+  whitePoint = $state(0);
   normalizedRotation = $derived.by(() => {
     const newAngle = this.imageRotation % 360;
     return newAngle < 0 ? newAngle + 360 : newAngle;
@@ -102,7 +120,14 @@ class TransformManager implements EditToolManager {
       this.mirrorVertical ||
       this.normalizedRotation !== 0 ||
       this.brightness !== 0 ||
-      this.contrast !== 0
+      this.contrast !== 0 ||
+      this.saturation !== 0 ||
+      this.exposure !== 0 ||
+      this.temperature !== 0 ||
+      this.tint !== 0 ||
+      this.sharpness !== 0 ||
+      this.blackPoint !== 0 ||
+      this.whitePoint !== 0
     );
   }
 
@@ -170,19 +195,39 @@ class TransformManager implements EditToolManager {
       });
     }
 
-    if (this.brightness !== 0 || this.contrast !== 0) {
+    if (
+      this.brightness !== 0 ||
+      this.contrast !== 0 ||
+      this.saturation !== 0 ||
+      this.exposure !== 0 ||
+      this.temperature !== 0 ||
+      this.tint !== 0 ||
+      this.sharpness !== 0 ||
+      this.blackPoint !== 0 ||
+      this.whitePoint !== 0
+    ) {
       edits.push({
         action: AssetEditAction.Color,
-        parameters: { brightness: this.brightness, contrast: this.contrast },
+        parameters: {
+          brightness: this.brightness,
+          contrast: this.contrast,
+          saturation: this.saturation,
+          exposure: this.exposure,
+          temperature: this.temperature,
+          tint: this.tint,
+          sharpness: this.sharpness,
+          blackPoint: this.blackPoint,
+          whitePoint: this.whitePoint,
+        },
       });
     }
 
     return edits;
   }
 
-  setColorAdjustment(type: 'brightness' | 'contrast', value: number) {
+  setColorAdjustment(type: ColorAdjustment, value: number) {
     this.hasChanges = true;
-    this[type] = clamp(value, -100, 100);
+    this[type] = clamp(value, type === 'sharpness' ? 0 : -100, 100);
   }
 
   async resetAllChanges() {
@@ -191,6 +236,13 @@ class TransformManager implements EditToolManager {
     this.mirrorVertical = false;
     this.brightness = 0;
     this.contrast = 0;
+    this.saturation = 0;
+    this.exposure = 0;
+    this.temperature = 0;
+    this.tint = 0;
+    this.sharpness = 0;
+    this.blackPoint = 0;
+    this.whitePoint = 0;
     await tick();
 
     this.onImageLoad([]);
@@ -229,9 +281,26 @@ class TransformManager implements EditToolManager {
 
     const colorEdit = edits.find((e) => e.action === AssetEditAction.Color);
     if (colorEdit) {
-      const { brightness, contrast } = colorEdit.parameters as ColorParameters;
+      const {
+        brightness,
+        contrast,
+        saturation = 0,
+        exposure = 0,
+        temperature = 0,
+        tint = 0,
+        sharpness = 0,
+        blackPoint = 0,
+        whitePoint = 0,
+      } = colorEdit.parameters as ColorParameters;
       this.brightness = brightness;
       this.contrast = contrast;
+      this.saturation = saturation;
+      this.exposure = exposure;
+      this.temperature = temperature;
+      this.tint = tint;
+      this.sharpness = sharpness;
+      this.blackPoint = blackPoint;
+      this.whitePoint = whitePoint;
     }
 
     await tick();
@@ -260,6 +329,13 @@ class TransformManager implements EditToolManager {
     this.mirrorVertical = false;
     this.brightness = 0;
     this.contrast = 0;
+    this.saturation = 0;
+    this.exposure = 0;
+    this.temperature = 0;
+    this.tint = 0;
+    this.sharpness = 0;
+    this.blackPoint = 0;
+    this.whitePoint = 0;
     this.region = { x: 0, y: 0, width: 100, height: 100 };
     this.cropImageSize = { width: 1000, height: 1000 };
     this.originalImageSize = { width: 1000, height: 1000 };

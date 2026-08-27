@@ -2,7 +2,7 @@ import { mkdtempDisposableSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import sharp from 'sharp';
-import { AssetEditAction, MirrorAxis } from 'src/dtos/editing.dto';
+import { AssetEditAction, type ColorParameters, MirrorAxis } from 'src/dtos/editing.dto';
 import { Colorspace, ImageFormat } from 'src/enum';
 import { LoggingRepository } from 'src/repositories/logging.repository';
 import { MediaRepository } from 'src/repositories/media.repository';
@@ -19,6 +19,29 @@ const getPixelColor = async (buffer: Buffer, x: number, y: number) => {
     b: data[idx + 2],
   };
 };
+
+const colorParameters = (overrides: Partial<ColorParameters> = {}): ColorParameters => ({
+  brightness: 0,
+  contrast: 0,
+  saturation: 0,
+  exposure: 0,
+  temperature: 0,
+  tint: 0,
+  sharpness: 0,
+  blackPoint: 0,
+  whitePoint: 0,
+  ...overrides,
+});
+
+const buildSolidColorImage = () =>
+  sharp({
+    create: {
+      width: 1,
+      height: 1,
+      channels: 4,
+      background: { r: 100, g: 150, b: 200, alpha: 1 },
+    },
+  }).png();
 
 const buildTestQuadImage = async () => {
   // build a 4 quadrant image for testing mirroring
@@ -178,7 +201,7 @@ describe(MediaRepository.name, () => {
         [
           {
             action: AssetEditAction.Color,
-            parameters: { brightness: 0, contrast: 50 },
+            parameters: colorParameters({ contrast: 50 }),
           },
         ],
       );
@@ -199,12 +222,33 @@ describe(MediaRepository.name, () => {
         [
           {
             action: AssetEditAction.Color,
-            parameters: { brightness: 25, contrast: 50 },
+            parameters: colorParameters({ brightness: 25, contrast: 50 }),
           },
         ],
       );
 
       expect(await getPixelColor(await result.png().toBuffer(), 0, 0)).toEqual({ r: 123, g: 123, b: 123 });
+    });
+
+    it('should apply saturation, exposure, temperature, tint, and tonal point adjustments', async () => {
+      const desaturated = sut['applyEdits'](buildSolidColorImage(), [
+        { action: AssetEditAction.Color, parameters: colorParameters({ saturation: -100 }) },
+      ]);
+      expect(await getPixelColor(await desaturated.png().toBuffer(), 0, 0)).toEqual({ r: 146, g: 146, b: 146 });
+
+      const temperatureAndTint = sut['applyEdits'](buildSolidColorImage(), [
+        { action: AssetEditAction.Color, parameters: colorParameters({ temperature: 100, tint: 100 }) },
+      ]);
+      expect(await getPixelColor(await temperatureAndTint.png().toBuffer(), 0, 0)).toEqual({ r: 120, g: 120, b: 160 });
+
+      const exposureAndBlackPoint = sut['applyEdits'](buildSolidColorImage(), [
+        { action: AssetEditAction.Color, parameters: colorParameters({ exposure: 100, blackPoint: 50 }) },
+      ]);
+      expect(await getPixelColor(await exposureAndBlackPoint.png().toBuffer(), 0, 0)).toEqual({
+        r: 192,
+        g: 255,
+        b: 255,
+      });
     });
   });
 

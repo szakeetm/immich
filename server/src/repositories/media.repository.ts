@@ -171,11 +171,42 @@ export class MediaRepository {
 
     const color = edits.find((edit) => edit.action === 'color');
     if (color) {
-      const brightness = 1 + color.parameters.brightness / 100;
-      const contrast = 1 + color.parameters.contrast / 100;
+      const {
+        brightness,
+        contrast,
+        saturation = 0,
+        exposure = 0,
+        temperature = 0,
+        tint = 0,
+        sharpness = 0,
+      } = color.parameters;
+      const blackPoint = color.parameters.blackPoint ?? 0;
+      const whitePoint = color.parameters.whitePoint ?? 0;
+      const brightnessFactor = 1 + brightness / 100;
+      const contrastFactor = 1 + contrast / 100;
+      const exposureFactor = 2 ** (exposure / 100);
+      const blackLevel = blackPoint * 0.64;
+      const whiteLevel = 255 - whitePoint * 0.64;
+      const levelSlope = 255 / (whiteLevel - blackLevel);
+      const temperatureFactor = temperature / 500;
+      const tintFactor = tint / 500;
 
       // Keep the contrast midpoint at middle gray, matching CSS brightness() and contrast().
-      pipeline = pipeline.linear(brightness * contrast, 128 * (1 - contrast));
+      const linearFactor = exposureFactor * brightnessFactor * contrastFactor * levelSlope;
+      const linearOffset = (128 * (1 - contrastFactor) - blackLevel) * levelSlope;
+
+      pipeline = pipeline
+        .linear(linearFactor, linearOffset)
+        .modulate({ saturation: 1 + saturation / 100 })
+        .recomb([
+          [1 + temperatureFactor, 0, 0],
+          [0, 1 - tintFactor, 0],
+          [0, 0, 1 - temperatureFactor],
+        ]);
+
+      if (sharpness > 0) {
+        pipeline = pipeline.sharpen({ sigma: 0.3 + (sharpness / 100) * 2.7 });
+      }
     }
 
     return pipeline;

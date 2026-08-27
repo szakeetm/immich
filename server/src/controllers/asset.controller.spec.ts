@@ -327,9 +327,24 @@ describe(AssetController.name, () => {
       expect(status).toBe(200);
     });
 
-    it('should accept brightness and contrast at their supported limits', async () => {
+    it('should accept color adjustments at their supported limits', async () => {
       const assetId = factory.uuid();
-      const edits = [{ action: 'color', parameters: { brightness: -100, contrast: 100 } }];
+      const edits = [
+        {
+          action: 'color',
+          parameters: {
+            brightness: -100,
+            contrast: 100,
+            saturation: -100,
+            exposure: 100,
+            temperature: -100,
+            tint: 100,
+            sharpness: 100,
+            blackPoint: -100,
+            whitePoint: 100,
+          },
+        },
+      ];
 
       const { status } = await request(ctx.getHttpServer()).put(`/assets/${assetId}/edits`).send({ edits });
 
@@ -337,7 +352,7 @@ describe(AssetController.name, () => {
       expect(status).toBe(200);
     });
 
-    it('should reject brightness and contrast values outside their supported limits', async () => {
+    it('should reject color adjustment values outside their supported limits', async () => {
       for (const [parameters, errors] of [
         [
           { brightness: -101, contrast: 0 },
@@ -346,6 +361,14 @@ describe(AssetController.name, () => {
         [
           { brightness: 0, contrast: 101 },
           [{ path: ['edits', 0, 'parameters', 'contrast'], message: 'Too big: expected number to be <=100' }],
+        ],
+        [
+          { brightness: 0, contrast: 0, saturation: -101 },
+          [{ path: ['edits', 0, 'parameters', 'saturation'], message: 'Too small: expected number to be >=-100' }],
+        ],
+        [
+          { brightness: 0, contrast: 0, sharpness: -1 },
+          [{ path: ['edits', 0, 'parameters', 'sharpness'], message: 'Too small: expected number to be >=0' }],
         ],
       ] as const) {
         const { status, body } = await request(ctx.getHttpServer())

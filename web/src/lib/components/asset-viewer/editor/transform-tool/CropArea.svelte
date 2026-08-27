@@ -37,8 +37,45 @@
   });
 
   let imageFilter = $derived(
-    `brightness(${1 + transformManager.brightness / 100}) contrast(${1 + transformManager.contrast / 100})`,
+    `brightness(${2 ** (transformManager.exposure / 100) * (1 + transformManager.brightness / 100)}) contrast(${1 + transformManager.contrast / 100}) saturate(${1 + transformManager.saturation / 100})`,
   );
+
+  let colorMatrix = $derived(
+    [
+      1 + transformManager.temperature / 500,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1 - transformManager.tint / 500,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1 - transformManager.temperature / 500,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+    ].join(' '),
+  );
+
+  let levels = $derived.by(() => {
+    const blackLevel = transformManager.blackPoint * 0.64;
+    const whiteLevel = 255 - transformManager.whitePoint * 0.64;
+    const slope = 255 / (whiteLevel - blackLevel);
+    return { slope, intercept: (-blackLevel * slope) / 255 };
+  });
+
+  let sharpnessKernel = $derived.by(() => {
+    const amount = (transformManager.sharpness / 100) * 0.25;
+    return `0 ${-amount} 0 ${-amount} ${1 + 4 * amount} ${-amount} 0 ${-amount} 0`;
+  });
 
   const edges = [ResizeBoundary.Top, ResizeBoundary.Right, ResizeBoundary.Bottom, ResizeBoundary.Left];
   const corners = [
@@ -72,13 +109,24 @@
     bind:this={transformManager.cropAreaEl}
     aria-label="Crop area"
   >
+    <svg class="absolute size-0" aria-hidden="true">
+      <filter id="color-adjustments">
+        <feColorMatrix type="matrix" values={colorMatrix} />
+        <feComponentTransfer>
+          <feFuncR type="linear" slope={levels.slope} intercept={levels.intercept} />
+          <feFuncG type="linear" slope={levels.slope} intercept={levels.intercept} />
+          <feFuncB type="linear" slope={levels.slope} intercept={levels.intercept} />
+        </feComponentTransfer>
+        <feConvolveMatrix order="3" kernelMatrix={sharpnessKernel} preserveAlpha="true" />
+      </filter>
+    </svg>
     <img
       draggable="false"
       src={imageSrc}
       alt={$getAltText(toTimelineAsset(asset))}
       class="h-full transition-transform select-none motion-reduce:transition-none"
       style:transform={imageTransform}
-      style:filter={imageFilter}
+      style:filter={`${imageFilter} url(#color-adjustments)`}
     />
     <div
       class={[
